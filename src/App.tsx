@@ -1,19 +1,39 @@
 import PdfIngest from "./components/PdfIngest";
 import RagQuery from "./components/RagQuery";
 
-const inngestEventUrl = import.meta.env.VITE_INNGEST_EVENT_URL ?? "http://127.0.0.1:8288/e/KEY";
-
-const inngestApiBase = import.meta.env.VITE_INNGEST_API_BASE ?? "http://127.0.0.1:8288/v1";
-  
-const backendUrl = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
-
 function App() {
   return (
     <main className="container">
-      <h1>RAG Frontend</h1>
+      <h1 className="app-title">
+        <span className="app-title-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path
+              d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M14 3v5h5"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M9 15h6M9 11h3"
+              stroke="currentColor"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+            />
+          </svg>
+        </span>
+        <span>RAG Frontend</span>
+      </h1>
 
-      <PdfIngest backendUrl={backendUrl} inngestBaseUrl={inngestApiBase} />
-      <RagQuery inngestBaseUrl={inngestApiBase} eventUrl={inngestEventUrl} />
+      <PdfIngest />
+      <RagQuery />
     </main>
   );
 }

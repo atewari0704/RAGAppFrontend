@@ -1,17 +1,19 @@
-import type { RunOutput, UploadPdfResponse } from "../types";
+import type { clearAllContextResponse, RunOutput, UploadPdfResponse } from "../types";
 
 const SUCCESS_STATUSES = ["Completed", "Succeeded", "Success", "Finished"];
 const FAILED_STATUSES = ["Failed", "Cancelled"];
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL ?? "http://localhost:8000";
+const INNGEST_EVENT_URL = import.meta.env.VITE_INNGEST_EVENT_URL ?? "http://127.0.0.1:8288/e/KEY";
+const INNGEST_API_BASE = import.meta.env.VITE_INNGEST_API_BASE ?? "http://127.0.0.1:8288/v1/events";
 
 export async function uploadPdf(
-  backendUrl: string,
   file: File
 ): Promise<UploadPdfResponse> {
   const formData = new FormData();
   formData.append("file", file);
 
-  const res = await fetch(`${backendUrl}/upload-pdf`, {
+  const res = await fetch(`${BACKEND_URL}/upload-pdf`, {
     method: "POST",
     body: formData,
   });
@@ -21,14 +23,24 @@ export async function uploadPdf(
   return (await res.json()) as UploadPdfResponse;
 }
 
+export async function clearAllContext(): Promise<clearAllContextResponse> {
+  const res = await fetch(`${BACKEND_URL}/clear-all-context`, {
+    method: "DELETE"
+  });
+
+  if (!res.ok) throw new Error(`Upload failed: ${res.status}`);
+
+  return (await res.json()) as clearAllContextResponse
+}
+
+
 export async function sendInngestEvent(
-  baseUrl: string,
   name: string,
-  data: Record<string, unknown>
+  data: Record<string, unknown> | null //data can technically be null
 ): Promise<string> {
   const payload = JSON.stringify({ name, data });
 
-  let res = await fetch(baseUrl, {
+  let res = await fetch(INNGEST_API_BASE, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: payload,
@@ -37,7 +49,7 @@ export async function sendInngestEvent(
   if (!res.ok) {
     if (res.status === 405) {
       throw new Error(
-        `Failed to send event: 405 (Method Not Allowed). Check VITE_INNGEST_EVENT_URL. Expected an Inngest event endpoint like /e/<event-key>, got: ${eventUrl}`
+        `Failed to send event: 405 (Method Not Allowed). Check VITE_INNGEST_EVENT_URL. Expected an Inngest event endpoint like /e/<event-key>, got: ${INNGEST_EVENT_URL}`
       );
     }
 
@@ -60,18 +72,15 @@ export async function sendInngestEvent(
 }
 
 
-
-
 export async function waitForRunOutput(
   eventId: string,
-  baseUrl: string,
   timeoutMs = 120_000,
   intervalMs = 500
 ): Promise<RunOutput> {
   const start = Date.now();
 
   while (true) {
-    const res = await fetch(`${baseUrl}/${eventId}/runs`);
+    const res = await fetch(`${INNGEST_EVENT_URL}/${eventId}/runs`);
     if (!res.ok) {
       throw new Error(`Inngest API error: ${res.status}`);
     }
@@ -90,6 +99,7 @@ export async function waitForRunOutput(
           sources: Array.isArray(output.sources)
             ? output.sources.map((source) => String(source))
             : [],
+            message: output.message ?? ""
         };
       }
 

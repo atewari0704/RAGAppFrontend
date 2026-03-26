@@ -2,11 +2,6 @@ import { FormEvent, useState } from "react";
 import { sendInngestEvent, waitForRunOutput } from "../lib/inngest";
 import type { RunOutput } from "../types";
 
-interface RagQueryProps {
-  inngestBaseUrl: string;
-  eventUrl: string;
-}
-
 function normalizeTopK(value: number): number {
   if (Number.isNaN(value)) return 5;
   if (value < 1) return 1;
@@ -14,7 +9,7 @@ function normalizeTopK(value: number): number {
   return Math.trunc(value);
 }
 
-export default function RagQuery({ inngestBaseUrl, eventUrl }: RagQueryProps) {
+export default function RagQuery() {
   const [question, setQuestion] = useState("");
   const [topK, setTopK] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
@@ -35,14 +30,12 @@ export default function RagQuery({ inngestBaseUrl, eventUrl }: RagQueryProps) {
     setResult(null);
 
     try {
-      const eventId = await sendInngestEvent(inngestBaseUrl, "rag/query", {
+      const eventId = await sendInngestEvent("rag/query", {
         question: trimmedQuestion,
         top_k: normalizeTopK(topK),
       });
 
-      console.log(`eventID forthe ragQuery: ${eventId}`)
-
-      const output = await waitForRunOutput(eventId, eventUrl);
+      const output = await waitForRunOutput(eventId);
       setResult(output);
     } catch (error) {
       setErrorMessage(
@@ -61,7 +54,7 @@ export default function RagQuery({ inngestBaseUrl, eventUrl }: RagQueryProps) {
 
       <form onSubmit={handleSubmit} className="stack">
         <label className="stack" htmlFor="rag-question">
-          <span className="label">Question</span>
+          <span className="label sublabel">Question</span>
           <input
             id="rag-question"
             type="text"
@@ -73,7 +66,7 @@ export default function RagQuery({ inngestBaseUrl, eventUrl }: RagQueryProps) {
         </label>
 
         <label className="stack" htmlFor="rag-top-k">
-          <span className="label">How many chunks to retrieve</span>
+          <span className="label sublabel">How many chunks to retrieve</span>
           <input
             id="rag-top-k"
             type="number"
@@ -87,7 +80,14 @@ export default function RagQuery({ inngestBaseUrl, eventUrl }: RagQueryProps) {
 
         <div className="row">
           <button type="submit" disabled={isLoading}>
-            {isLoading ? "Asking..." : "Ask"}
+            {isLoading ? (
+              <>
+                <span className="spinner" aria-hidden="true" />
+                <span>Asking...</span>
+              </>
+            ) : (
+              "Ask"
+            )}
           </button>
           {isLoading && <p className="muted">Waiting for answer...</p>}
         </div>
